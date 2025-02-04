@@ -1,0 +1,13 @@
+apiVersion: v1
+entries:
+  stdapp:
+  - apiVersion: v2
+    created: "2025-02-04T17:17:26.388701929Z"
+    description: A generic opinionated standard configuration for kubernetes deployments
+    digest: 9568b2ff656a218e841fe70760f70a14d651231ee716b4b733935b1086063e60
+    name: stdapp
+    type: application
+    urls:
+    - https://github.com/tokheim/charts/releases/download/stdapp-0.0.3/stdapp-0.0.3.tgz
+    version: 0.0.3
+generated: "2025-02-04T17:17:26.388707369Z"
