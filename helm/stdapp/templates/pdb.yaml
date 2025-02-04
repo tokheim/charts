@@ -1,0 +1,18 @@
+{{- if .Values.disruptionPolicy.enabled -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "stdapp.fullname" . }}
+  labels:
+    {{ include "stdapp.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.disruptionPolicy.minAvailable }}
+  minAvailable: {{ .Values.disruptionPolicy.minAvailable }}
+  {{- else }}
+  maxUnavailable: {{ .Values.disruptionPolicy.maxUnavailable }}
+  {{- end}}
+
+  selector:
+    matchLabels:
+      {{ include "stdapp.selectorLabels" . | nindent 6 }}
+{{- end -}}

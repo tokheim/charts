@@ -1,0 +1,159 @@
+{{- $root := . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "stdapp.fullname" . }}
+  labels:
+    {{- include "stdapp.labels" . | nindent 4 }}
+    {{- range $name, $label := .Values.deployment.labels }}
+    {{ $name }}: {{ $label | quote }}
+    {{- end }}
+  annotations:
+    {{- range $name, $annotation := .Values.deployment.annotations }}
+    {{ $name }}: {{ $annotation | quote }}
+    {{- end }}
+spec:
+  strategy:
+    {{- toYaml .Values.deployment.strategy | nindent 4 }}
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.deployment.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "stdapp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{ include "stdapp.labels" . | nindent 8 }}
+        {{- range $name, $label := .Values.pod.labels }}
+        {{ $name }}: {{ $label | quote }}
+        {{- end }}
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: {{ .Values.deployment.evictable | quote }}
+        {{- range $name, $annotation := .Values.pod.annotations }}
+        {{ $name }}: {{ $annotation | quote }}
+        {{- end }}
+        {{- if include "stdapp.kv.enabled" .Values.configMaps.enabled }}
+        checksum/config: {{ include (print $.Template.BasePath "/config_map.yaml") . | sha256sum }}
+        {{- end }}
+        
+        {{- if .Values.vaultAgent.enabled }}
+        {{- range $name, $annotation := .Values.vaultAgent.annotations }}
+        vault.hashicorp.com/{{ $name }}: {{ $annotation | quote }}
+        {{- end }}
+        {{- range $akey, $aobj := .Values.vaultAgent.annotationTemplates }}
+        {{- if $aobj.enabled }}
+        vault.hashicorp.com/{{ $aobj.key }}: {{ tpl $aobj.template $root | quote }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+    spec:
+      imagePullSecrets:
+      - name: {{ .Values.container.image.pullSecret | default .Values.global.image.pullSecret }}
+      {{- with .Values.deployment.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ . }}
+      {{- end }}
+      containers:
+        - name: {{ .Values.container.name }}
+          image: {{ include "stdapp.image" . | quote }}
+          imagePullPolicy: {{ .Values.container.image.pullPolicy | default .Values.global.image.pullPolicy }}
+          {{- with .Values.container.command }}
+          command: {{ . | toJson }}
+          {{- end }}
+          {{- with .Values.container.args }}
+          args: {{ . | toJson }}
+          {{- end }}
+          {{- if .Values.container.lifecycle.preStopExec.enabled }}
+          lifecycle:
+            preStop:
+              exec:
+                command: {{ .Values.container.lifecycle.preStopExec.command | toJson }}
+          {{- end }}
+          {{- with .Values.container.env }}
+          env:
+            {{- range . }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          {{- end }}
+          volumeMounts:
+            {{- range $cmkey, $cmdata := .Values.configMaps }}
+            {{- if $cmdata.enabled }}
+            - name: {{ $cmkey }}
+              mountPath: {{ $cmdata.mountPath | quote }}
+              readOnly: true
+            {{- end }}
+            {{- end }}
+            {{- range $edkey, $eddata := .Values.emptyDirs }}
+            {{- if $eddata.enabled }}
+            - name: {{ $edkey }}
+              mountPath: {{ $eddata.mountPath | quote }}
+            {{- end }}
+            {{- end }}
+          ports:
+          {{- range $name, $port := .Values.ports -}}
+          {{- if and $port.enabled (or $port.exposeInContainer (not (hasKey $port "exposeInContainer"))) }}
+            - name: {{ $name }}
+              containerPort: {{ $port.containerPort }}
+              protocol: {{ $port.protocol }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            {{ include "stdapp.probeconfig" .Values.probes.readiness | nindent 12 }}
+          {{- end }}
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            {{ include "stdapp.probeconfig" .Values.probes.liveness | nindent 12 }}
+          {{- end }}
+          {{- if .Values.probes.startup.enabled }}
+          startupProbe:
+            {{ include "stdapp.probeconfig" .Values.probes.startup | nindent 12 }}
+          {{- end }}
+          resources:
+            {{ toYaml .Values.container.resources | nindent 12 }}
+
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      
+      volumes:
+        {{- range $cmkey, $cmdata := .Values.configMaps }}
+        {{- if $cmdata.enabled }}
+        - name: {{ $cmkey }}
+          configMap:
+            name: {{ printf "%s-%s" (include "stdapp.fullname" $root) $cmkey | trunc 63 | trimSuffix "-" }}
+        {{- end }}
+        {{- end }}
+        {{- range $edkey, $eddata := .Values.emptyDirs }}
+        {{- if $eddata.enabled }}
+        - name: {{ $edkey }}
+          {{- if $eddata.sizeLimit }}
+          emptyDir:
+            sizeLimit: {{ $eddata.sizeLimit | quote }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
+        {{- end }}
+      
+      topologySpreadConstraints:
+        {{- range $name, $constraint := .Values.deployment.topologySpreadConstraints -}}
+        {{- if $constraint.enabled }}
+        - maxSkew: {{ $constraint.maxSkew }}
+          topologyKey: {{ $constraint.topologyKey }}
+          whenUnsatisfiable: {{ $constraint.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- if $constraint.labelSelector }}
+              {{- toYaml $constraint.labelSelector | nindent 14 }}
+              {{- else }}
+              {{- include "stdapp.selectorLabels" $root | nindent 14 }}
+              {{- end }}
+          {{- with $constraint.matchLabelKeys }}
+          matchLabelKeys: {{ toJson . }}
+          {{- end }}
+        {{- end }}
+        {{- end }}
+

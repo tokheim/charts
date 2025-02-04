@@ -1,0 +1,16 @@
+global:
+  image:
+    registry: test.azurecr.io
+
+container:
+  image:
+    tag: "v1.0.0"
+    repository: myapp.mytest
+
+ports:
+  http:
+    enabled: True
+
+probes:
+  readiness:
+    enabled: True

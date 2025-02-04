@@ -1,0 +1,168 @@
+nameOverride: "test-nameoverride"
+fullnameOverride: ""
+
+global:
+  image: {}
+    # registry: ""
+    # repository: ""
+    # tag: ""
+    # pullSecret: ""
+
+deployment:
+  replicaCount: 2
+  labels:
+    testLabel: testValue
+  annotations:
+    testAnnotation: testValue
+  terminationGracePeriodSeconds: 60
+  evictable: true
+
+  # control pod availability during release
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 2
+      maxSurge: 1
+
+  topologySpreadConstraints:
+    preferredNode:
+      enabled: true
+      maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      matchLabelKeys:
+      - "app.kubernetes.io/version"
+
+disruptionPolicy:
+  enabled: true
+  maxUnavailable: "20%"
+
+container:
+  name: app
+  command: ["python"]
+  args: ["-m", "my.app", "test.yaml"]
+  envs:
+  - name: CUSTOM_ENV
+    value: custom_value
+
+  image:
+    registry: "test.azurecr.io"
+    repository: "myapp.testapp"
+    pullPolicy: IfNotPresent
+    tag: "v10"
+    pullSecret: "some-secret"
+  
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  lifecycle:
+    preStopExec:
+      enabled: true
+      command: ["/bin/sleep", "10"]
+
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 3
+
+  targetCPU: 90
+
+pod:
+  labels:
+    POD_LABEL: test_value
+  annotations:
+    POD_ANNOTATION: test_value
+
+
+securityContext:
+  fsGroup: 2000
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+ports:
+  http:
+    enabled: true
+    port: 80
+    containerPort: 8000
+    protocol: TCP
+    exposeInService: true
+    exposeInContainer: true
+  admin:
+    enabled: true
+    port: 8080
+    containerPort: 8001
+
+service:
+  type: ClusterIP
+  headless: true
+
+probes:
+  readiness:
+    enabled: true
+    path: /health
+    port: http
+    httpHeaders:
+    - name: testheader
+      value: test
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 1
+
+  liveness:
+    enabled: true
+    path: /liveness
+    port: http
+    httpHeaders: []
+    initialDelaySeconds: 30
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 5
+
+  startup:
+    enabled: true
+    path: /startup
+    port: http
+
+configMaps:
+  example-cm:
+    enabled: true
+    data:
+      some.file.txt: |
+        lorem ipsum dolor est
+    mountPath: "/etc/example-path"
+emptyDirs:
+  example-dir:
+    enabled: true
+    sizeLimit: "50Mi"
+    mountPath: "/etc/example"
+
+vaultAgent:
+  enabled: true
+  annotations:
+    agent-inject: "true"
+    log-level: "warn"
+    agent-init-first: "true"
+    auth-type: "kubernetes"
+    agent-inject-token: "true"
+    agent-run-as-same-user: "true"
+
+  annotationTemplates:
+    roleFromNamespace:
+      enabeld: true
+    clusterAuthPath:
+      enabled: true
+    defaultSecretConfig:
+      enabled: true
+
+  cluster: test-cluster

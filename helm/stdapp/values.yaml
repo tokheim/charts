@@ -1,0 +1,209 @@
+# Default values for stdapp.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+global:
+  image: {}
+    # registry: ""
+    # repository: ""
+    # tag: ""
+    # pullSecret: ""
+
+deployment:
+  replicaCount: 2
+  labels: {}
+  annotations: {}
+  # terminationGracePeriodSeconds: 60
+
+  # mark pod as evictable even if it has emptydir
+  evictable: true
+
+  # control pod availability during release
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+
+  topologySpreadConstraints:
+    preferredNode:
+      enabled: true
+      maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      # Override labels if constraint should be shared with other deployment
+      #labelSelector:
+      #  foo: bar
+
+      # Default balances within a specific release version
+      matchLabelKeys:
+      - "app.kubernetes.io/version"
+
+# pod availability during cluster maintenance
+disruptionPolicy:
+  enabled: true
+  maxUnavailable: "20%"
+
+container:
+  name: app
+  command: []
+  args: []
+  env: []
+  # - name: env-key
+  #   value: env-value
+
+  image:
+    registry: ""
+    repository: ""
+    pullPolicy: IfNotPresent
+    tag: latest
+    pullSecret: ""
+  
+  resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+  # requires img support for command, useful to drain traffic before shutdown
+  lifecycle:
+    preStopExec:
+      enabled: false
+      command: ["/bin/sleep", "10"]
+
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 8
+
+  # Controls how rapid scaleups and scaledowns should happen
+  # Defaults in chart reduces k8s default eagerness to scale
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 300
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 300
+      - type: Pods
+        value: 4
+        periodSeconds: 300
+      selectPolicy: Max
+
+  targetCPU: 80
+  # targetMemory: 80
+
+pod:
+  labels: {}
+  annotations: {}
+
+
+securityContext:
+  fsGroup: 2000
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+ports:
+  http:
+    enabled: False
+    port: 80
+    containerPort: 8000
+    protocol: TCP
+    exposeInService: true
+    exposeInContainer: true
+
+service:
+  type: ClusterIP
+  headless: False
+
+probes:
+  readiness:
+    enabled: False
+    path: /health
+    port: http
+    httpHeaders: []
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 1
+
+  liveness:
+    enabled: False
+    path: /health
+    port: http
+    httpHeaders: []
+    initialDelaySeconds: 30
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 5
+
+  startup:
+    enabled: False
+    path: /startup
+    port: http
+    httpHeaders: []
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 30
+    failureThreshold: 60
+
+configMaps:
+  example-cm:
+    enabled: False
+    data: {}
+    mountPath: "/etc/example-path"
+emptyDirs:
+  example-dir:
+    enabled: False
+    sizeLimit: "50Mi"
+    mountPath: "/etc/example"
+
+vaultAgent:
+  enabled: False
+  annotations:
+    agent-inject: "true"
+    log-level: "warn"
+    agent-init-first: "true"
+    auth-type: "kubernetes"
+    agent-inject-token: "true"
+    agent-run-as-same-user: "true"
+    #Likely you rather want to use annotation templates
+    #auth-path: "auth/kubernetes/cluster"
+    #vault.hashicorp.com/role: "{{ required "Missing value NAMESPACE" .Values.BEVARING_NAMESPACE }}"
+
+  annotationTemplates:
+    roleFromNamespace:
+      enabeld: false
+      key: "role"
+      template: '{{ .Release.Namespace }}'
+    clusterAuthPath:
+      enabled: false
+      key: "auth-path"
+      template: 'auth/kubernetes/{{ required "Set vaultAgent.cluster"  .Values.vaultAgent.cluster }}'
+    defaultSecretConfig:
+      #uses cluster config and helm namespace and (full)name override as path to injected config
+      enabled: false
+      key: "agent-inject-secret-config"
+      template: 'kubernetes/{{ required "Set vaultAgent.cluster" .Values.vaultAgent.cluster }}/data/{{ .Release.Namespace }}/{{ include "stdapp.name" . }}'
+
+  # Some of the default templates requires this key set to kubernetes cluster
+  # cluster: "KarbonX"

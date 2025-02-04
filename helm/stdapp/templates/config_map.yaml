@@ -1,0 +1,14 @@
+{{- $root := . }}
+{{- range $cmkey, $cmdata := .Values.configMaps }}
+{{- if $cmdata.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-%s" (include "stdapp.fullname" $root) $cmkey | trunc 63 | trimSuffix "-" }}
+  labels:
+    {{- include "stdapp.labels" $root | nindent 4 }}
+data:
+  {{ toYaml $cmdata.data | nindent 2 }}
+---
+{{- end }}
+{{- end }}
