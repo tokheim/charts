@@ -40,7 +40,7 @@ disruptionPolicy:
 container:
   name: app
   command: ["/agnhost"]
-  args: ["pause"]
+  args: ["liveness"]
   env:
   - name: CUSTOM_ENV
     value: custom_value

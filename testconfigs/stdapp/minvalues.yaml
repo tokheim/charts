@@ -6,6 +6,7 @@ container:
   image:
     registry: registry.k8s.io
     repository: e2e-test-images/agnhost
+  args: ["liveness"]
 
 ports:
   http:
