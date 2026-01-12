@@ -3,7 +3,7 @@ fullnameOverride: ""
 
 global:
   image:
-    registry: "registry.k8s.io"
+    registry: "docker.io"
     # repository: ""
     # tag: ""
     # pullSecret: ""
@@ -39,16 +39,16 @@ disruptionPolicy:
 
 container:
   name: app
-  command: ["/agnhost"]
-  args: ["liveness"]
+  command: ["/docker-entrypoint.sh"]
+  args: ["nginx", "-g", "daemon off;"]
   env:
   - name: CUSTOM_ENV
     value: custom_value
 
   image:
-    repository: "e2e-test-images/agnhost"
+    repository: "nginx"
     pullPolicy: IfNotPresent
-    tag: "2.40"
+    tag: "1.29.0"
     #pullSecret: "some-secret"
   
   resources:
@@ -87,7 +87,7 @@ pod:
 securityContext:
   fsGroup: 6000
   runAsNonRoot: true
-  runAsUser: 5000
+  runAsUser: 101
 
 ports:
   http:
@@ -109,7 +109,7 @@ service:
 probes:
   readiness:
     enabled: true
-    path: /healthz
+    path: /health
     port: http
     httpHeaders:
     - name: testheader
@@ -121,7 +121,7 @@ probes:
 
   liveness:
     enabled: true
-    path: /healthz
+    path: /health
     port: http
     httpHeaders: []
     initialDelaySeconds: 30
@@ -131,21 +131,40 @@ probes:
 
   startup:
     enabled: true
-    path: /healthz
+    path: /health
     port: http
 
 configMaps:
-  example-cm:
+  nginxconf:
     enabled: true
     data:
-      some.file.txt: |
-        lorem ipsum dolor est
-    mountPath: "/etc/example-path"
+      nginx.conf: |
+        worker_processes 3;
+        events {
+          worker_connections 1024;
+        }
+        http {
+          server {
+            listen 8080;
+            location /health {
+              return 200 "healthy";
+            }
+          }
+        }
+    mountPath: "/etc/nginx"
 emptyDirs:
-  example-dir:
+  log:
     enabled: true
     sizeLimit: "50Mi"
-    mountPath: "/etc/example"
+    mountPath: "/var/log/nginx"
+  cache:
+    enabled: true
+    sizeLimit: "50Mi"
+    mountPath: "/var/cache/nginx"
+  run:
+    enabled: true
+    sizeLimit: "1Mi"
+    mountPath: "/run"
 
 vaultAgent:
   enabled: true
