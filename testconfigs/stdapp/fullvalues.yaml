@@ -2,8 +2,8 @@ nameOverride: "test-nameoverride"
 fullnameOverride: ""
 
 global:
-  image: {}
-    # registry: ""
+  image:
+    registry: "docker.io/registry.k8s.io"
     # repository: ""
     # tag: ""
     # pullSecret: ""
@@ -46,11 +46,10 @@ container:
     value: custom_value
 
   image:
-    registry: "test.azurecr.io"
-    repository: "myapp.testapp"
+    repository: "e2e-test-images/agnhost"
     pullPolicy: IfNotPresent
-    tag: "v10"
-    pullSecret: "some-secret"
+    tag: "2.40"
+    #pullSecret: "some-secret"
   
   resources:
     limits:
@@ -93,14 +92,14 @@ ports:
   http:
     enabled: true
     port: 80
-    containerPort: 8000
+    containerPort: 8080
     protocol: TCP
     exposeInService: true
     exposeInContainer: true
   admin:
     enabled: true
-    port: 8080
-    containerPort: 8001
+    port: 8083
+    containerPort: 8081
 
 service:
   type: ClusterIP
@@ -109,7 +108,7 @@ service:
 probes:
   readiness:
     enabled: true
-    path: /health
+    path: /healthz
     port: http
     httpHeaders:
     - name: testheader
@@ -121,7 +120,7 @@ probes:
 
   liveness:
     enabled: true
-    path: /liveness
+    path: /healthz
     port: http
     httpHeaders: []
     initialDelaySeconds: 30
@@ -131,7 +130,7 @@ probes:
 
   startup:
     enabled: true
-    path: /startup
+    path: /healthz
     port: http
 
 configMaps:

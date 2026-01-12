@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-args="--create-namespace --wait --timeout 60s --debug --dry-run"
+args="--create-namespace --wait --timeout 60s --debug"
 
 for path in helm/*/ ; do
     chart=$(basename "$path");

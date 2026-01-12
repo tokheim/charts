@@ -1,16 +1,18 @@
 global:
   image:
-    registry: test.azurecr.io
+    tag: 2.40
 
 container:
   image:
-    tag: "v1.0.0"
-    repository: myapp.mytest
+    registry: docker.io/registry.k8s.io
+    repository: e2e-test-images/agnhost
 
 ports:
   http:
     enabled: True
+    containerPort: 8080
 
 probes:
   readiness:
     enabled: True
+    path: /healthz

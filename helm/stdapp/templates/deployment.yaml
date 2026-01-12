@@ -48,8 +48,10 @@ spec:
         {{- end }}
         {{- end }}
     spec:
+      {{- with (or .Values.container.image.pullSecret .Values.global.image.pullSecret) }}
       imagePullSecrets:
-      - name: {{ .Values.container.image.pullSecret | default .Values.global.image.pullSecret }}
+      - name: {{ . }}
+      {{- end }}
       {{- with .Values.deployment.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ . }}
       {{- end }}
