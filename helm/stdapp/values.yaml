@@ -180,6 +180,11 @@ configMaps:
     enabled: False
     data: {}
     mountPath: "/etc/example-path"
+  example-envs:
+    enabled: False
+    data:
+      HELLO: WORLD
+    useAsEnv: True
 emptyDirs:
   example-dir:
     enabled: False

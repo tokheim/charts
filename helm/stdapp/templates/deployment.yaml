@@ -78,9 +78,16 @@ spec:
               value: {{ .value | quote }}
             {{- end }}
           {{- end }}
+          envFrom:
+          {{- range $cmkey, $cmdata := .Values.configMaps }}
+          {{- if (and $cmdata.enabled $cmdata.useAsEnv) }}
+          - configMapRef:
+              name: {{ printf "%s-%s" (include "stdapp.fullname" $root) $cmkey | trunc 63 | trimSuffix "-" }}
+          {{- end }}
+          {{- end }}
           volumeMounts:
             {{- range $cmkey, $cmdata := .Values.configMaps }}
-            {{- if $cmdata.enabled }}
+            {{- if (and $cmdata.enabled $cmdata.mountPath) }}
             - name: {{ $cmkey }}
               mountPath: {{ $cmdata.mountPath | quote }}
               readOnly: true
@@ -126,7 +133,7 @@ spec:
       
       volumes:
         {{- range $cmkey, $cmdata := .Values.configMaps }}
-        {{- if $cmdata.enabled }}
+        {{- if (and $cmdata.enabled $cmdata.mountPath) }}
         - name: {{ $cmkey }}
           configMap:
             name: {{ printf "%s-%s" (include "stdapp.fullname" $root) $cmkey | trunc 63 | trimSuffix "-" }}

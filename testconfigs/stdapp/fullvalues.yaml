@@ -152,6 +152,11 @@ configMaps:
           }
         }
     mountPath: "/etc/nginx"
+  env-overrides:
+    enabled: True
+    data:
+      TEST: TEST
+    useAsEnv: True
 emptyDirs:
   log:
     enabled: true
