@@ -64,6 +64,11 @@ container:
       enabled: true
       command: ["/bin/sleep", "10"]
 
+  securityContext:
+    capabilities:
+      add:
+        - "NET_BIND_SERVICE"
+
 
 autoscaling:
   enabled: true
@@ -80,13 +85,9 @@ pod:
 
 
 securityContext:
-  fsGroup: 2000
-  capabilities:
-    drop:
-    - ALL
-  readOnlyRootFilesystem: true
+  fsGroup: 6000
   runAsNonRoot: true
-  runAsUser: 1000
+  runAsUser: 5000
 
 ports:
   http:

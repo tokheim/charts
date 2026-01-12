@@ -112,6 +112,10 @@ spec:
           startupProbe:
             {{ include "stdapp.probeconfig" .Values.probes.startup | nindent 12 }}
           {{- end }}
+          {{- with .Values.container.securityContext }}
+          securityContext:
+            {{ toYaml . | nindent 12 }}
+          {{- end }}
           resources:
             {{ toYaml .Values.container.resources | nindent 12 }}
 
