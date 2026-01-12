@@ -21,7 +21,7 @@ deployment:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 2
+      maxUnavailable: 50%
       maxSurge: 1
 
   topologySpreadConstraints:
