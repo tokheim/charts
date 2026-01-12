@@ -24,3 +24,6 @@
           id: install
         - name: Test charts
           run: ./test-charts.sh
+        - name: Debug failure
+          if: failure()
+          run: ./debug-charts.sh
