@@ -83,7 +83,6 @@ container:
   securityContext:
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
-    fsGroup: 2000
     runAsUser: 1000
     runAsGroup: 3000
     capabilities:
@@ -128,6 +127,7 @@ pod:
 # security context defaults for entire pod
 securityContext:
   runAsNonRoot: true
+  fsGroup: 2000
   seccompProfile:
     type: RuntimeDefault
 
