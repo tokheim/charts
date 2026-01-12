@@ -3,7 +3,7 @@ fullnameOverride: ""
 
 global:
   image:
-    registry: "docker.io/registry.k8s.io"
+    registry: "registry.k8s.io"
     # repository: ""
     # tag: ""
     # pullSecret: ""
@@ -39,9 +39,9 @@ disruptionPolicy:
 
 container:
   name: app
-  command: ["python"]
-  args: ["-m", "my.app", "test.yaml"]
-  envs:
+  command: ["/agnhost"]
+  args: [""]
+  env:
   - name: CUSTOM_ENV
     value: custom_value
 

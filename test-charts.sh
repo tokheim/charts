@@ -11,6 +11,7 @@ for path in helm/*/ ; do
         config="${filename%.*}"
         ns="$chart-${config%.*}"
         echo "testing chart $chart w/ cfg $configpath in ns $ns"
+        helm upgrade --install test-app -n $ns helm/$chart -f $configpath --debug --dry-run
         helm upgrade --install test-app -n $ns helm/$chart -f $configpath $args
         sleep 1s
         helm test test-app -n $ns
