@@ -79,6 +79,17 @@ container:
       enabled: false
       command: ["/bin/sleep", "10"]
 
+  # Security context that only can apply at container level
+  securityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    runAsUser: 1000
+    runAsGroup: 3000
+    capabilities:
+      drop:
+        - ALL
+      add: []
+
 
 autoscaling:
   enabled: false
@@ -113,14 +124,12 @@ pod:
   annotations: {}
 
 
+# security context defaults for entire pod
 securityContext:
-  fsGroup: 2000
-  capabilities:
-    drop:
-    - ALL
-  readOnlyRootFilesystem: true
   runAsNonRoot: true
-  runAsUser: 1000
+  fsGroup: 2000
+  seccompProfile:
+    type: RuntimeDefault
 
 ports:
   http:

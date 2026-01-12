@@ -1,16 +1,51 @@
 global:
   image:
-    registry: test.azurecr.io
+    tag: 1.29.0
 
 container:
   image:
-    tag: "v1.0.0"
-    repository: myapp.mytest
+    registry: docker.io
+    repository: nginx
 
 ports:
   http:
     enabled: True
+    containerPort: 8080
 
 probes:
   readiness:
     enabled: True
+    path: /health
+
+configMaps:
+  nginxconf:
+    enabled: true
+    data:
+      nginx.conf: |
+        worker_processes 3;
+        events {
+          worker_connections 1024;
+        }
+        http {
+          server {
+            listen 8080;
+            location /health {
+              return 200 "healthy";
+            }
+          }
+        }
+    mountPath: "/etc/nginx"
+
+emptyDirs:
+  log:
+    enabled: true
+    sizeLimit: "50Mi"
+    mountPath: "/var/log/nginx"
+  cache:
+    enabled: true
+    sizeLimit: "50Mi"
+    mountPath: "/var/cache/nginx"
+  run:
+    enabled: true
+    sizeLimit: "1Mi"
+    mountPath: "/run"

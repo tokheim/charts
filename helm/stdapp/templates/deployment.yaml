@@ -33,7 +33,7 @@ spec:
         {{- range $name, $annotation := .Values.pod.annotations }}
         {{ $name }}: {{ $annotation | quote }}
         {{- end }}
-        {{- if include "stdapp.kv.enabled" .Values.configMaps.enabled }}
+        {{- if include "stdapp.kv.enabled" .Values.configMaps }}
         checksum/config: {{ include (print $.Template.BasePath "/config_map.yaml") . | sha256sum }}
         {{- end }}
         
@@ -48,8 +48,10 @@ spec:
         {{- end }}
         {{- end }}
     spec:
+      {{- with (or .Values.container.image.pullSecret .Values.global.image.pullSecret) }}
       imagePullSecrets:
-      - name: {{ .Values.container.image.pullSecret | default .Values.global.image.pullSecret }}
+      - name: {{ . }}
+      {{- end }}
       {{- with .Values.deployment.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ . }}
       {{- end }}
@@ -109,6 +111,10 @@ spec:
           {{- if .Values.probes.startup.enabled }}
           startupProbe:
             {{ include "stdapp.probeconfig" .Values.probes.startup | nindent 12 }}
+          {{- end }}
+          {{- with .Values.container.securityContext }}
+          securityContext:
+            {{ toYaml . | nindent 12 }}
           {{- end }}
           resources:
             {{ toYaml .Values.container.resources | nindent 12 }}

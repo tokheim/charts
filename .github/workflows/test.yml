@@ -5,7 +5,8 @@
     push:
       branches:
         - "**"
-        #- "!main"
+        - "!gh-pages"
+        - "!main"
       
   jobs:
     test-chart:
@@ -23,3 +24,6 @@
           id: install
         - name: Test charts
           run: ./test-charts.sh
+        - name: Debug failure
+          if: failure()
+          run: ./debug-charts.sh
