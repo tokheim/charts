@@ -221,3 +221,22 @@ vaultAgent:
 
   # Some of the default templates requires this key set to kubernetes cluster
   # cluster: "KarbonX"
+
+vault:
+  defaults:
+    type: kv-v2
+    mount: ""
+    vaultAuthRef: vault-auth
+    refreshAfter: 300s
+    destination_type: Opaque
+    rolloutRestart: True
+  staticSecrets:
+    example:
+      enabled: False
+      path: "some/vault/obj"
+      envKeys:
+      - envName: SOME_PARAM
+        vaultKey: name_in_vault
+      # override defaults like
+      # rolloutRestart: False
+      # mount: "y"
