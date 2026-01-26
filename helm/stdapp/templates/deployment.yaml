@@ -162,6 +162,10 @@ spec:
           {{- end }}
         {{- end }}
         {{- end }}
+
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ include "stdapp.saname" . }}
+      {{- end }}
       
       topologySpreadConstraints:
         {{- range $name, $constraint := .Values.deployment.topologySpreadConstraints -}}

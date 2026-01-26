@@ -190,3 +190,8 @@ vaultAgent:
       enabled: true
 
   cluster: test-cluster
+
+serviceAccount:
+  enabled: true
+  create: true
+  name: sa-name
