@@ -31,6 +31,17 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
+The name used for serviceaccount
+*/}}
+{{- define "stdapp.saname" -}}
+{{- if .Values.serviceAccount.name }}
+{{- .Values.serviceAccount.name | quote }}
+{{- else }}
+{{- include "stdapp.fullname" . }}
+{{- end }}
+{{- end }}
+
+{{/*
 Common labels
 */}}
 {{- define "stdapp.labels" -}}
