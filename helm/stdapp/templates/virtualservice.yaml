@@ -1,0 +1,29 @@
+{{- if .Values.virtualService.enabled }}
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: {{ include "stdapp.fullname" . }}
+  labels:
+    {{- include "stdapp.labels" . | nindent 4 }}
+  {{- with .Values.virtualService.annotations }}
+  annotations:
+    {{- range $name, $annotation := . }}
+    {{ $name }}: {{ $annotation | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- if .Values.virtualService.hosts }}
+  hosts:
+    {{- toYaml .Values.virtualService.hosts | nindent 4 }}
+  {{- end }}
+  {{- if .Values.virtualService.gateways }}
+  gateways:
+    {{- toYaml .Values.virtualService.gateways | nindent 4 }}
+  {{- end }}
+  http:
+    - route:
+        - destination:
+            host: {{ .Values.virtualService.destination.host | default (printf "%s.%s.svc.cluster.local" (include "stdapp.fullname" .) .Release.Namespace) }}
+            port:
+              number: {{ .Values.virtualService.destination.port }}
+{{- end }}

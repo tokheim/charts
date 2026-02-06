@@ -246,3 +246,14 @@ serviceAccount:
   create: False
   name: ""
   annotations: {}
+
+virtualService:
+  enabled: False
+  annotations: {}
+  hosts:
+    - "*"
+  gateways: []
+  destination:
+    # Leave host empty to auto-generate from service name
+    host: ""
+    port: 80
